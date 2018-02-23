@@ -1,3 +1,5 @@
+#!/bin/bash
+
 FILES=esp/*
 
 for f in $FILES
