@@ -2,8 +2,7 @@ import time
 
 import machine
 
-import conf
-
+from data import conf
 
 led = machine.Pin(2, machine.Pin.OUT)
 

@@ -2,8 +2,8 @@ import time
 
 import network
 
-import conf
-from pins import LED
+from data import conf
+from data.pins import LED
 
 
 ap_if = network.WLAN(network.AP_IF)
