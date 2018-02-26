@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo "Clearing files"
+sudo ../env/bin/ampy -p /dev/ttyUSB0 rmdir /
+
 FILES=esp/*
 
 for f in $FILES
