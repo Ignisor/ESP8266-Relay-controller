@@ -18,5 +18,5 @@ def process_post(request):
 
 @srv.view('GET', '/error/')
 def error_view(request):
-    err = open(conf.ERROR_LOG_FILENAME).read()
-    return Response(200, err)
+    with open(conf.ERROR_LOG_FILENAME) as err_file:
+        return Response(200, err_file.read())
