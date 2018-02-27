@@ -1,5 +1,5 @@
-from data.wifi import reset_if_not_connected
-from data.pins import RELAY, ON, OFF, check_button
+from utils.wifi import reset_if_not_connected
+from utils.pins import RELAY, ON, OFF, check_button
 from server import server_app
 
 

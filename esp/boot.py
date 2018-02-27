@@ -1,5 +1,5 @@
-from data import wifi
-from data.pins import LED
+from utils import wifi
+from utils.pins import LED
 
 
 wifi.enable_wifi()

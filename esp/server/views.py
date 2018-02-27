@@ -1,4 +1,4 @@
-from data.pins import open_relay
+from utils.pins import open_relay
 from . import server_app as srv
 from .core import Response
 
