@@ -13,9 +13,9 @@ CODE_HEADERS = {
 
 class Server(object):
     """ Class describing a simple HTTP server"""
-    def __init__(self, views, port=80):
+    def __init__(self, port=80):
         self.host = ''  # works on all avaivable network interfaces
-        self.views = views
+        self.views = {}
         self.port = port
 
         self.socket = None
@@ -27,9 +27,17 @@ class Server(object):
         self.socket.bind((self.host, self.port))
         self._wait_for_connections(main_task)
 
-    def shutdown(self):
-        """ Shut down the server """
-        self.socket.shutdown(socket.SHUT_RDWR)
+    def view(self, method, url):
+        """View decorator"""
+        def view_decorator(func):
+            def func_wrapper(request):
+                return func(request)
+
+            key = '{}:{}'.format(method.lower(), url.lower())
+            self.views[key] = func_wrapper
+
+            return func_wrapper
+        return view_decorator
 
     def _wait_for_connections(self, main_task):
         """
@@ -67,16 +75,11 @@ class Server(object):
                     raise e
 
         data_str = bytes.decode(data)  # decode it to string
-
         request = Request(data_str, addr)
 
-        if request.method in self.views.keys():
-            view = self.views.get(request.method, lambda r: Response(404))
-        else:
-            view = lambda r: Response(400)
-
+        view = self._get_view(request)
         response = view(request)
-
+        print(response.content)
         server_response = response.encode()
 
         conn.send(server_response)
@@ -90,6 +93,10 @@ class Server(object):
             if chunk.endswith(b'\r\n\r\n'):
                 return data
 
+    def _get_view(self, request):
+        key = '{}:{}'.format(request.method.lower(), request.url.lower())
+        return self.views.get(key, lambda r: Response(404))
+
 
 class Request(object):
     def __init__(self, data, addr):
@@ -100,6 +107,7 @@ class Request(object):
 
         self.address = addr
         self.method = self.body.split(' ')[0]
+        self.url = self.body.split(' ')[1]
 
 
 class Response(object):
