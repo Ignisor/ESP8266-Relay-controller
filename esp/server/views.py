@@ -1,3 +1,4 @@
+from data import conf
 from utils.pins import open_relay
 from . import server_app as srv
 from .core import Response
@@ -31,3 +32,9 @@ def process_get(request):
 def process_post(request):
     open_relay()
     return process_get(request)
+
+
+@srv.view('GET', '/error/')
+def error_view(request):
+    err = open(conf.ERROR_LOG_FILENAME).read()
+    return Response(200, err)
