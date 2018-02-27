@@ -1,31 +1,13 @@
 from data import conf
 from utils.pins import open_relay
 from . import server_app as srv
-from .core import Response, HTMLResponse
-
-
-HTML = """\
-<!DOCTYPE HTML>
-<html>
- <head>
-  <meta charset="utf-8">
-  <title>ESP-Door</title>
- </head>
- <body>
-
- <form action="." method="POST">
-  <p><input type="submit" value="Open"></p>
- </form>
-
- </body>
-</html>
-"""
+from .core import Response, TemplateResponse
 
 
 @srv.view('GET', '/')
 def process_get(request):
-    content = HTML
-    return HTMLResponse(200, content)
+    template = "index.html"
+    return TemplateResponse(200, template)
 
 
 @srv.view('POST', '/')

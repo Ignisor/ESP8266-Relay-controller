@@ -2,6 +2,7 @@ import socket
 from uerrno import EAGAIN, ETIMEDOUT
 import gc
 
+from data import conf
 
 CODE_HEADERS = {
     200: 'OK',
@@ -146,3 +147,30 @@ class HTMLResponse(Response):
         headers.append('Content-type: text/html')
 
         return headers
+
+
+class TemplateResponse(HTMLResponse):
+    """Simple template render and response"""
+    def __init__(self, code, template, context=None):
+        self.template = TemplateResponse.render_template(template, context)
+
+        super().__init__(code, self.template)
+
+    @staticmethod
+    def render_template(template_name, context=None):
+        template = TemplateResponse.open_template(template_name)
+
+        if context:
+            template.format(**context)
+
+        return template
+
+    @staticmethod
+    def open_template(template_name):
+        path = conf.TEMPLATE_FOLDER
+        path += template_name
+
+        template = open(path, 'r').read()
+
+        return template
+
