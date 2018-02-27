@@ -114,19 +114,22 @@ class Response(object):
     def __init__(self, code, content=None):
         self.code = code
         self.content = content
-        self.headers = self._gen_headers()
+        self.headers = self._process_headers()
 
     def _gen_headers(self):
         """ Generates HTTP response Headers. Ommits the first line! """
-        # determine response code
+        headers = []
         code_h = CODE_HEADERS[self.code]
-        h = 'HTTP/1.1 {code} {text}\n'.format(code=self.code, text=code_h)
+        headers.append('HTTP/1.1 {code} {text}'.format(code=self.code, text=code_h))
 
-        # write further headers
-        h += 'Content-type: text/html\n'
-        h += 'Server: ESP-Python-HTTP-Server\n'
-        h += 'Connection: close\n\n'  # signal that the conection wil be closed after complting the request
+        headers.append('Server: ESP-Python-HTTP-Server')
+        headers.append('Connection: close')  # signal that the conection wil be closed after complting the request
 
+        return headers
+
+    def _process_headers(self):
+        h = '\n'.join(self._gen_headers())
+        h += '\n\n'
         return h
 
     def encode(self):
@@ -135,3 +138,11 @@ class Response(object):
             resp += self.content.encode()
 
         return resp
+
+
+class HTMLResponse(Response):
+    def _gen_headers(self):
+        headers = super()._gen_headers()
+        headers.append('Content-type: text/html')
+
+        return headers

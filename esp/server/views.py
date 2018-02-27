@@ -1,7 +1,7 @@
 from data import conf
 from utils.pins import open_relay
 from . import server_app as srv
-from .core import Response
+from .core import Response, HTMLResponse
 
 
 HTML = """\
@@ -25,7 +25,7 @@ HTML = """\
 @srv.view('GET', '/')
 def process_get(request):
     content = HTML
-    return Response(200, content)
+    return HTMLResponse(200, content)
 
 
 @srv.view('POST', '/')
