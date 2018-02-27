@@ -1,12 +1,12 @@
 import time
 
-from data.pins import RELAY
+from data.wifi import reset_if_not_connected
+from data.pins import RELAY, BUTTON
 from server.core import Server, Response
 
 
 ON = 0
 OFF = 1
-
 
 HTML = """\
 <!DOCTYPE HTML>
@@ -16,14 +16,23 @@ HTML = """\
   <title>ESP-Door</title>
  </head>
  <body>
- 
+
  <form action="." method="POST">
   <p><input type="submit" value="Open"></p>
  </form>
- 
+
  </body>
 </html>
 """
+
+
+def open_relay():
+    print('Opening door...')
+    RELAY.value(ON)
+    time.sleep(5)
+    RELAY.value(OFF)
+
+    return True
 
 
 def process_get(request):
@@ -32,10 +41,25 @@ def process_get(request):
 
 
 def process_post(request):
-    RELAY.value(ON)
-    time.sleep(5)
-    RELAY.value(OFF)
+    open_relay()
     return process_get(request)
+
+
+def check_button():
+    if BUTTON.value() == ON:
+        open_relay()
+
+
+def main_loop():
+    is_connected = reset_if_not_connected()
+    if is_connected:
+        RELAY.value(OFF)  # keep door closed if wi-fi connection is ok
+    else:
+        RELAY.value(ON)
+        return False
+
+    check_button()
+    return True
 
 
 views = {
@@ -43,6 +67,5 @@ views = {
     'GET': process_get,
 }
 
-
 s = Server(views)
-s.activate_server()
+s.activate_server(main_loop)

@@ -1,4 +1,5 @@
 import socket
+from uerrno import EAGAIN, ETIMEDOUT
 import gc
 
 
@@ -19,48 +20,75 @@ class Server(object):
 
         self.socket = None
 
-    def activate_server(self):
+    def activate_server(self, main_task):
         """ Attempts to aquire the socket and launch the server """
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind((self.host, self.port))
-        self._wait_for_connections()
+        self._wait_for_connections(main_task)
 
     def shutdown(self):
         """ Shut down the server """
         self.socket.shutdown(socket.SHUT_RDWR)
 
-    def _wait_for_connections(self):
-        """ Main loop awaiting connections """
-        self.socket.listen(3)  # maximum number of queued connections
+    def _wait_for_connections(self, main_task):
+        """
+        Main non blocking loop awaiting connections
+        :param main_task: function to call in loop while waiting for connection
+        """
+        self.socket.listen(3)
+        self.socket.setblocking(False)
 
         while True:
-            conn, addr = self.socket.accept()
+            if not main_task():
+                break  # break the loop if main_tesk returned false
 
-            data = bytes()
-            while True:
-                d = conn.recv(128)  # receive data from client
-                data += d
-                if d.endswith(b'\r\n\r\n'):
-                    break
+            s_data = dict(d.split('=') for d in str(self.socket).replace('>', '').split()[1:])
 
-            data_str = bytes.decode(data)  # decode it to string
+            if s_data.get('incoming', '0') != '0':
+                try:
+                    self._handle_connection()
+                except OSError as e:
+                    if e.args[0] != ETIMEDOUT:
+                        raise e
 
-            request = Request(data_str, addr)
+                gc.collect()
 
-            if request.method in self.views.keys():
-                view = self.views.get(request.method, lambda r: Response(404))
-            else:
-                view = lambda r: Response(400)
+    def _handle_connection(self):
+        conn, addr = self.socket.accept()
+        conn.settimeout(0.5)
 
-            response = view(request)
+        while True:
+            try:
+                data = self._get_data(conn)
+                break
+            except OSError as e:
+                if e.args[0] != EAGAIN:
+                    raise e
 
-            server_response = response.encode()
+        data_str = bytes.decode(data)  # decode it to string
 
-            conn.send(server_response)
-            conn.close()
+        request = Request(data_str, addr)
 
-            gc.collect()
+        if request.method in self.views.keys():
+            view = self.views.get(request.method, lambda r: Response(404))
+        else:
+            view = lambda r: Response(400)
+
+        response = view(request)
+
+        server_response = response.encode()
+
+        conn.send(server_response)
+        conn.close()
+
+    def _get_data(self, connection, chunk_size=128):
+        data = b''
+        while True:
+            chunk = connection.recv(chunk_size)
+            data += chunk
+            if chunk.endswith(b'\r\n\r\n'):
+                return data
 
 
 class Request(object):

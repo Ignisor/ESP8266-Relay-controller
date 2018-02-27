@@ -1,9 +1,9 @@
 import time
-
 import network
+import machine
 
 from data import conf
-from data.pins import LED
+from data.pins import LED, RELAY
 
 
 ap_if = network.WLAN(network.AP_IF)
@@ -37,3 +37,11 @@ def connect(ssid=None, password=None):
 
         if sta_if.isconnected():
             return sta_if.isconnected()
+
+
+def reset_if_not_connected():
+    if sta_if.isconnected():
+        return True
+    else:
+        machine.reset()
+        return False
