@@ -32,7 +32,10 @@ class Server(object):
         """View decorator"""
         def view_decorator(func):
             def func_wrapper(request):
-                return func(request)
+                try:
+                    return func(request)
+                except Exception:
+                    return Response(500, "500 Server Error")
 
             key = '{}:{}'.format(method.lower(), url.lower())
             self.views[key] = func_wrapper
