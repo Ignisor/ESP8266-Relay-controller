@@ -64,7 +64,7 @@ class Server(object):
                     if e.args[0] != ETIMEDOUT:
                         raise e
 
-                gc.collect()
+            gc.collect()
 
     def _handle_connection(self):
         conn, addr = self.socket.accept()
@@ -85,7 +85,12 @@ class Server(object):
         response = view(request)
         server_response = response.encode()
 
-        conn.send(server_response)
+        try:
+            for l in server_response:
+                conn.send(l)
+        except TypeError:
+            conn.send(server_response)
+
         conn.close()
 
     def _get_data(self, connection, chunk_size=128):
@@ -172,7 +177,15 @@ class TemplateResponse(HTMLResponse):
         path = conf.TEMPLATE_FOLDER
         path += template_name
 
-        template = open(path, 'r').read()
+        template = ''
+        with open(path, 'r') as template_file:
+            for l in template_file:
+                template += l
 
         return template
 
+    def encode(self):
+        yield self.headers.encode()
+
+        for l in self.content:
+            yield l.encode()
