@@ -39,7 +39,7 @@ In our case we use it to control magnet lock on door in our office. It has simpl
 
 ## Authors
 
-- German Gensetskiy - [GoWombarTeam](https://gowombat.team/)
+- German Gensetskiy - [GoWombatTeam](https://gowombat.team/)
 
 ## License
 
