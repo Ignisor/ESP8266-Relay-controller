@@ -83,7 +83,6 @@ class Server(object):
 
         view = self._get_view(request)
         response = view(request)
-        print(response.content)
         server_response = response.encode()
 
         conn.send(server_response)
