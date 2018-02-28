@@ -1,71 +1,28 @@
-import time
+import sys
+import machine
 
-from data.wifi import reset_if_not_connected
-from data.pins import RELAY, BUTTON
-from server.core import Server, Response
-
-
-ON = 0
-OFF = 1
-
-HTML = """\
-<!DOCTYPE HTML>
-<html>
- <head>
-  <meta charset="utf-8">
-  <title>ESP-Door</title>
- </head>
- <body>
-
- <form action="." method="POST">
-  <p><input type="submit" value="Open"></p>
- </form>
-
- </body>
-</html>
-"""
-
-
-def open_relay():
-    print('Opening door...')
-    RELAY.value(ON)
-    time.sleep(5)
-    RELAY.value(OFF)
-
-    return True
-
-
-def process_get(request):
-    content = HTML
-    return Response(200, content)
-
-
-def process_post(request):
-    open_relay()
-    return process_get(request)
-
-
-def check_button():
-    if BUTTON.value() == ON:
-        open_relay()
+from data import conf
+from utils.wifi import reset_if_not_connected
+from utils.pins import RELAY, ON, OFF, check_button
+from server import server_app
 
 
 def main_loop():
     is_connected = reset_if_not_connected()
     if is_connected:
-        RELAY.value(OFF)  # keep door closed if wi-fi connection is ok
+        RELAY.value(ON)  # keep relay closed if wi-fi connection is ok
     else:
-        RELAY.value(ON)
+        RELAY.value(OFF)  # open relay and return false
         return False
 
     check_button()
     return True
 
 
-views = {
-    'POST': process_post,
-    'GET': process_get,
-}
-
-s = Server(views)
-s.activate_server(main_loop)
+try:
+    server_app.activate_server(main_loop)
+except Exception as e:
+    # write exception to file and restart a machine in case of error
+    with open(conf.ERROR_LOG_FILENAME, 'w') as err_file:
+        sys.print_exception(e, err_file)
+    machine.reset()

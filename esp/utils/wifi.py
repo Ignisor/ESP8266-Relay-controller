@@ -3,8 +3,7 @@ import network
 import machine
 
 from data import conf
-from data.pins import LED, RELAY
-
+from utils.pins import LED
 
 ap_if = network.WLAN(network.AP_IF)
 sta_if = network.WLAN(network.STA_IF)
