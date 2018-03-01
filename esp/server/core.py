@@ -34,8 +34,8 @@ class Server(object):
             def func_wrapper(request):
                 try:
                     return func(request)
-                except Exception:
-                    return Response(500, "500 Server Error")
+                except Exception as e:
+                    return Response(500, "500 Server Error ({})".format(e))
 
             key = '{}:{}'.format(method.lower(), url.lower())
             self.views[key] = func_wrapper
@@ -48,7 +48,7 @@ class Server(object):
         Main non blocking loop awaiting connections
         :param main_task: function to call in loop while waiting for connection
         """
-        self.socket.listen(3)
+        self.socket.listen(1)
         self.socket.setblocking(False)
 
         while True:
@@ -68,7 +68,7 @@ class Server(object):
 
     def _handle_connection(self):
         conn, addr = self.socket.accept()
-        conn.settimeout(0.5)
+        conn.settimeout(1)
 
         while True:
             try:
@@ -130,6 +130,7 @@ class Response(object):
         code_h = CODE_HEADERS[self.code]
         headers.append('HTTP/1.1 {code} {text}'.format(code=self.code, text=code_h))
 
+        headers.append('Cache-Control: no-cache, no-store, must-revalidate')
         headers.append('Server: ESP-Python-HTTP-Server')
         headers.append('Connection: close')  # signal that the conection wil be closed after complting the request
 
